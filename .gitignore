@@ -1,2 +1,8 @@
 #.environment files
 .env
+
+## Node modules
+node_modules/
+
+# gitignore itself
+.gitignore
