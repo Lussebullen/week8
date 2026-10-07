@@ -31,4 +31,4 @@ When creating a book, we can also add a friendly message if anything inportant i
 - The pool was moved to it's own db.js file
 - A new variable was added to the *.env file poining at port 3000. It is referenced by index.js
 - The routes were modified slightly so that localhost:3000/books fetches all the books and localhost:3000 welcomes the user
-![Task-2](/images/welcome.png)
+![Task-3](/images/welcome.png)
