@@ -28,6 +28,9 @@ app.get("/", async (req, res) => {
 // Endpoint to get a specific book by ID
 app.get("/books/:id", async (req, res) => {
     const { id } = req.params; // Get the book ID from the URL parameters
+    if (isNaN(id)) {
+        return res.status(400).send("Invalid book ID");
+    }
     try {
         const result = await pool.query("SELECT * FROM books WHERE id = $1", [id]);
         if (result.rows.length === 0) {
@@ -41,12 +44,16 @@ app.get("/books/:id", async (req, res) => {
 
 app.post("/books", async (req, res) => {
     const { title, genre, published_year } = req.body;
+    // Validate the input data
+    if (!title || !genre || !published_year) {
+        return res.status(400).send("Missing required fields: title, genre, published_year");
+    }
     try {
         const result = await pool.query(
             "INSERT INTO books (title, genre, published_year) VALUES ($1, $2, $3) RETURNING *",
             [title, genre, published_year]
         );
-        res.json(result.rows[0]);
+        res.status(201).json(result.rows[0]);
     } catch (err) {
         res.status(500).send(err.message);
     }

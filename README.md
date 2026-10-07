@@ -19,3 +19,9 @@ Result: If successfull, the reuest returns the specified book data. If not, a fr
 ![Task-1](/images/get-book-by-id.png)
 ![Task-1](/images/get-book-by-id-fail-1.png)
 ![Task-1](/images/get-book-by-id-fail-2.png)
+
+Exercise 2 - Adding more percise error messages. 
+In our case, if the book id cannot be processes ("abc"), then a better message will be displayed insted of a "500: Internal server errror" 
+![Task-2](/images/get-book-by-id-fail-3.png)
+When creating a book, we can also add a friendly message if anything inportant is missing.
+![Task-2](/images/create-missing-info.png)
