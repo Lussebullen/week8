@@ -1,22 +1,16 @@
 import express from "express";
-import pg from "pg";
-import dotenv from "dotenv";
+import { pool } from "./db.js";
 
-dotenv.config();
 const app = express();
 app.use(express.json());
 
-const { Pool } = pg;
+const port = process.env.APP_PORT;
 
-const pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  host: process.env.POSTGRES_HOST,
-  database: process.env.POSTGRES_DB,
-  password: process.env.POSTGRES_PASSWORD,
-  port: process.env.POSTGRES_PORT,
+app.get("/", (req, res) => {
+    res.send("Welcome to the Books API!");
 });
 
-app.get("/", async (req, res) => {
+app.get("/books", async (req, res) => {
     try {
         const result = await pool.query("SELECT * FROM books");
         res.json(result.rows);
@@ -94,6 +88,6 @@ app.delete("/books/:id", async (req, res) => {
     }
 });
 
-app.listen(3000, (req, res) => {
-  console.log("Server is running on port 3000");
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
