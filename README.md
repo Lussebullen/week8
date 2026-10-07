@@ -1,3 +1,4 @@
+# Connect Express to our Docker containers
 Same as before (2 Docker containers), but with an important addition. We will also use the "pg"-package,
 and connect Express to postgreSQL.
 
