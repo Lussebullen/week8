@@ -109,7 +109,7 @@ app.patch("/books/:id", async (req, res) => {
            published_year = COALESCE($3, published_year)
        WHERE id = $4
        RETURNING *`,
-      [title ?? null, genre ?? null, published_year ?? null, id]
+      [title ?? null, genre ?? null, published_year ?? null, id] //"title ?? null" turns a missing field (undefined) into null, so the placeholder always gets a value.
     );
 
     if (result.rows.length === 0) {
