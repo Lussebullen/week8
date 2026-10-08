@@ -32,3 +32,20 @@ When creating a book, we can also add a friendly message if anything inportant i
 - A new variable was added to the *.env file poining at port 3000. It is referenced by index.js
 - The routes were modified slightly so that localhost:3000/books fetches all the books and localhost:3000 welcomes the user
 ![Task-3](/images/welcome.png)
+
+## Exercise 4 - Filter and sort
+In this part we change the route for GET books to support additional parameters. For example:
+- books/genre=drama or books/sort=published_year, or both together books/genre=drama&sort=published_year. To reflect the changes made I added more books to the database of a certain genre (Fiction).
+
+The next image shows a list of books sorted by the publishing year 
+![Task-4](/images/sorted-by-published.png)
+
+And here we can see the list of books, both sorted by the publishing year and filtered to only contain the specific genre (Fiction)
+![Task-4](/images/sorted-by-published-and-filtered.png)
+
+## Exercise 5 - PATCH
+In this part we implementes a PATCH route that only updates the fields that are sent with the request (and not those that are missing).
+If Anything is missing, the table row affected will preserve the old data, avoiding NULL values to polute our information.
+
+The next image shows a PATCH operation wher only 2 (of 3) parameters are sent (and modified). "genre" is not present in the mix so it won't be affected by our change.
+![Task-4](/images/patch.png)

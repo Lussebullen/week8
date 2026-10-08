@@ -10,13 +10,35 @@ app.get("/", (req, res) => {
     res.send("Welcome to the Books API!");
 });
 
+
+const allowedSorts = ["id", "title", "genre", "published_year"];
+
 app.get("/books", async (req, res) => {
-    try {
-        const result = await pool.query("SELECT * FROM books");
-        res.json(result.rows);
-    } catch (err) {
-        res.status(500).send(err.message);
+  //Filter out the books by genre if the query parameter is provided
+  const genre = req.query.genre;
+  let query = "SELECT * FROM books";
+  const params = [];
+  const sort = req.query.sort || "id";
+
+  if (genre) {
+    query += " WHERE genre = $1";
+    params.push(genre);
+  }
+
+  if (!allowedSorts.includes(sort)) {
+    return res.status(400).send("Invalid sort parameter");
+  }
+
+  try {
+    const result = await pool.query(query + ` ORDER BY ${sort}`, params);
+    //If the list of books is empty, return a 404 status code with a message
+    if (result.rows.length === 0) {
+      return res.status(404).send("No books were found that match your criteria");
     }
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 // Endpoint to get a specific book by ID
@@ -70,7 +92,34 @@ app.put("/books/:id", async (req, res) => {
     }
 });
 
+app.patch("/books/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, genre, published_year } = req.body;
 
+  // Avoid updating if no fields are provided
+  if (title === undefined && genre === undefined && published_year === undefined) {
+    return res.status(400).send("No fields provided for update");
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE books
+       SET title = COALESCE($1, title),
+           genre = COALESCE($2, genre),
+           published_year = COALESCE($3, published_year)
+       WHERE id = $4
+       RETURNING *`,
+      [title ?? null, genre ?? null, published_year ?? null, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).send("Book not found");
+    }
+    res.json(result.rows[0]);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
 
 app.delete("/books/:id", async (req, res) => {
     const { id } = req.params; // Get the book ID from the URL parameters
