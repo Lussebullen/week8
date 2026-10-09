@@ -13,7 +13,7 @@ Run "node index.js" to start the express server
 Both must be running.
 
 ## Exercise 1 - A new route
-I created a new route to fetch a single book
+We create a new route to fetch a single book
 Method: GET
 Route "/books/id"
 Result: If successfull, the reuest returns the specified book data. If not, a friendly message is displayed
@@ -44,8 +44,24 @@ And here we can see the list of books, both sorted by the publishing year and fi
 ![Task-4](/images/sorted-by-published-and-filtered.png)
 
 ## Exercise 5 - PATCH
-In this part we implementes a PATCH route that only updates the fields that are sent with the request (and not those that are missing).
+In this part we implement a PATCH route that only updates the fields that are sent with the request (and not those that are missing).
 If Anything is missing, the table row affected will preserve the old data, avoiding NULL values to polute our information.
 
 The next image shows a PATCH operation wher only 2 (of 3) parameters are sent (and modified). "genre" is not present in the mix so it won't be affected by our change.
-![Task-4](/images/patch.png)
+![Task-5](/images/patch.png)
+
+## Exercise 6 - Add authors table
+In this part we 
+- add an authors table connected to the books table with a 1-to-many relationship.
+- create a new route GET /authors to fetch all authors.
+- create a new route POST /authors to create a new author.
+- create a new route GET /authors/:id/books to fetch all the books a specific author wrote.
+
+The next image shows books wrote by a specific author (where the author id is specified in the URL).
+![Task-6](/images/author-found.png)
+
+But we can also have cases where the author did not publish anything yet, or the book has an unknown origin (i.e ancient documents).
+![Task-6](/images/author-unknown.png)
+
+Instead of throwing the error code 23503 (foreign key violation) we display a friendlt message:
+![Task-6](/images/author-not-exist.png)

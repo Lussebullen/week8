@@ -59,29 +59,32 @@ app.get("/books/:id", async (req, res) => {
 });
 
 app.post("/books", async (req, res) => {
-    const { title, genre, published_year } = req.body;
+    const { title, genre, published_year, author_id } = req.body;
     // Validate the input data
-    if (!title || !genre || !published_year) {
-        return res.status(400).send("Missing required fields: title, genre, published_year");
+    if (!title || !genre || !published_year || !author_id) {
+        return res.status(400).send("Missing required fields: title, genre, published_year, author_id");
     }
     try {
         const result = await pool.query(
-            "INSERT INTO books (title, genre, published_year) VALUES ($1, $2, $3) RETURNING *",
-            [title, genre, published_year]
+            "INSERT INTO books (title, genre, published_year, author_id) VALUES ($1, $2, $3, $4) RETURNING *",
+            [title, genre, published_year, author_id]
         );
         res.status(201).json(result.rows[0]);
     } catch (err) {
+        if (err.code === "23503") {
+            return res.status(400).send("Author does not exist");
+        }
         res.status(500).send(err.message);
     }
 });
 
 app.put("/books/:id", async (req, res) => {
     const { id } = req.params; // Get the book ID from the URL parameters
-    const { title, genre, published_year } = req.body; // Get the new book data from the request body
+    const { title, genre, published_year, author_id } = req.body; // Get the new book data from the request body
     try {
         const result = await pool.query(
-            "UPDATE books SET title = $1, genre = $2, published_year = $3 WHERE id = $4 RETURNING *",
-            [title, genre, published_year, id] // Replace the placeholders with the actual values
+            "UPDATE books SET title = $1, genre = $2, published_year = $3, author_id = $4 WHERE id = $5 RETURNING *",
+            [title, genre, published_year, author_id, id] // Replace the placeholders with the actual values
         );
         if (result.rows.length === 0) {
             return res.status(404).send("Book not found");
@@ -94,10 +97,10 @@ app.put("/books/:id", async (req, res) => {
 
 app.patch("/books/:id", async (req, res) => {
   const { id } = req.params;
-  const { title, genre, published_year } = req.body;
+  const { title, genre, published_year, author_id } = req.body;
 
   // Avoid updating if no fields are provided
-  if (title === undefined && genre === undefined && published_year === undefined) {
+  if (title === undefined && genre === undefined && published_year === undefined && author_id === undefined) {
     return res.status(400).send("No fields provided for update");
   }
 
@@ -106,10 +109,11 @@ app.patch("/books/:id", async (req, res) => {
       `UPDATE books
        SET title = COALESCE($1, title),
            genre = COALESCE($2, genre),
-           published_year = COALESCE($3, published_year)
-       WHERE id = $4
+           published_year = COALESCE($3, published_year),
+           author_id = COALESCE($4, author_id)
+       WHERE id = $5
        RETURNING *`,
-      [title ?? null, genre ?? null, published_year ?? null, id] //"title ?? null" turns a missing field (undefined) into null, so the placeholder always gets a value.
+      [title ?? null, genre ?? null, published_year ?? null, author_id ?? null, id] //"title ?? null" turns a missing field (undefined) into null, so the placeholder always gets a value.
     );
 
     if (result.rows.length === 0) {
@@ -135,6 +139,62 @@ app.delete("/books/:id", async (req, res) => {
     } catch (err) {
         res.status(500).send(err.message);
     }
+});
+
+app.get("/authors", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM authors");
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.get("/authors/:id/books", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Case 1: does the author exist at all?
+    const author = await pool.query(
+      "SELECT id, name FROM authors WHERE id = $1",
+      [id]
+    );
+    if (author.rows.length === 0) {
+      return res.status(404).send("Author not found");
+    }
+
+    const result = await pool.query(
+      `SELECT books.id, books.title, books.genre, books.published_year,
+              authors.name AS author_name
+       FROM books
+       JOIN authors ON books.author_id = authors.id
+       WHERE authors.id = $1`,
+      [id]
+    );
+
+    // Case 2: author exists, but has no books
+    if (result.rows.length === 0) {
+      return res.json({
+        message: `Author ${author.rows[0].name} has no books yet as far as we know.`,
+        books: [],
+      });
+    }
+
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
+app.post("/authors", async (req, res) => {
+  const { name } = req.body;
+
+  try {
+    const result = await pool.query("INSERT INTO authors (name) VALUES ($1) RETURNING *", [name]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 app.listen(port, () => {
