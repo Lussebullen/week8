@@ -1,6 +1,7 @@
 import express from 'express';
 import { pool } from './db.js';
 import { z } from 'zod';
+//import { title } from 'process';
 
 const app = express();
 app.use(express.json());
@@ -87,35 +88,46 @@ app.get('/books/:id', async (req, res) => {
       return res.status(404).send('Book not found');
     }
     res.json(result.rows[0]);
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while fetching authors');
+    }
   }
 });
 
 app.post('/books', async (req, res) => {
-  const { title, genre, published_year, author_id } = req.body;
   // Validate the input data
   const validatedData = librarySchema_Books.safeParse(req.body);
   if (!validatedData.success) {
     return res.status(400).json(z.flattenError(validatedData.error).fieldErrors);
   }
+  const { title, genre, published_year, author_id } = validatedData.data;
   try {
     const result = await pool.query(
       'INSERT INTO books (title, genre, published_year, author_id) VALUES ($1, $2, $3, $4) RETURNING *',
       [title, genre, published_year, author_id]
     );
     res.status(201).json(result.rows[0]);
-  } catch (err: unknown) {
-    if (isDbError(err) && err.code === '23503') {
-      return res.status(400).send('Author does not exist');
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
     }
-    res.status(500).send(getErrorMessage(err));
+    else {
+      res.status(500).send('Unknown error occurred while creating book');
+    }
   }
 });
 
 app.put('/books/:id', async (req, res) => {
   const { id } = req.params; // Get the book ID from the URL parameters
-  const { title, genre, published_year, author_id } = req.body; // Get the new book data from the request body
+  const validatedData = librarySchema_Books.safeParse(req.body);
+  if (!validatedData.success) {
+    return res.status(400).json(z.flattenError(validatedData.error).fieldErrors);
+  }
+  const { title, genre, published_year, author_id } = validatedData.data;
   try {
     const result = await pool.query(
       'UPDATE books SET title = $1, genre = $2, published_year = $3, author_id = $4 WHERE id = $5 RETURNING *',
@@ -125,14 +137,24 @@ app.put('/books/:id', async (req, res) => {
       return res.status(404).send('Book not found');
     }
     res.json(result.rows[0]); // Return the updated book data
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while updating book');
+    }
   }
 });
 
 app.patch('/books/:id', async (req, res) => {
   const { id } = req.params;
-  const { title, genre, published_year, author_id } = req.body;
+  
+  const validatedData = librarySchema_Books.safeParse(req.body);
+  if (!validatedData.success) {
+    return res.status(400).json(z.flattenError(validatedData.error).fieldErrors);
+  }
+  const { title, genre, published_year, author_id } = validatedData.data;
 
   // Avoid updating if no fields are provided
   if (title === undefined && genre === undefined && published_year === undefined && author_id === undefined) {
@@ -155,8 +177,13 @@ app.patch('/books/:id', async (req, res) => {
       return res.status(404).send('Book not found');
     }
     res.json(result.rows[0]);
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while updating book');
+    }
   }
 });
 
@@ -171,8 +198,13 @@ app.delete('/books/:id', async (req, res) => {
       return res.status(404).send('Book not found');
     }
     res.json(result.rows[0]);
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while deleting book');
+    }
   }
 });
 
@@ -180,8 +212,13 @@ app.get('/authors', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM authors');
     res.json(result.rows);
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while fetching authors');
+    }
   }
 });
 
@@ -216,8 +253,13 @@ app.get('/authors/:id/books', async (req, res) => {
     }
 
     res.json(result.rows);
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while fetching authors');
+    }
   }
 });
 
@@ -231,8 +273,13 @@ app.post('/authors', async (req, res) => {
   try {
     const result = await pool.query('INSERT INTO authors (name) VALUES ($1) RETURNING *', [name]);
     res.status(201).json(result.rows[0]);
-  } catch (err: unknown) {
-    res.status(500).send(getErrorMessage(err));
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).send(err.message);
+    }
+    else {
+      res.status(500).send('Unknown error occurred while creating author');
+    }
   }
 });
 
