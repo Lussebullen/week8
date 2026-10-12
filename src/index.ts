@@ -2,7 +2,7 @@ import express from 'express';
 import { pool } from './db.js';
 import { z } from 'zod';
 import { env } from './env.js';
-import { librarySchema_Authors, librarySchema_Books } from './schemas.js';
+import { librarySchema_Authors, librarySchema_Books, librarySchema_BooksPatch } from './schemas.js';
 
 const app = express();
 app.use(express.json());
@@ -127,16 +127,11 @@ app.put('/books/:id', async (req, res) => {
 app.patch('/books/:id', async (req, res) => {
   const { id } = req.params;
   
-  const validatedData = librarySchema_Books.safeParse(req.body);
+  const validatedData = librarySchema_BooksPatch.safeParse(req.body);
   if (!validatedData.success) {
     return res.status(400).json(z.flattenError(validatedData.error).fieldErrors);
   }
   const { title, genre, published_year, author_id } = validatedData.data;
-
-  // Avoid updating if no fields are provided
-  if (title === undefined && genre === undefined && published_year === undefined && author_id === undefined) {
-    return res.status(400).send('No fields provided for update');
-  }
 
   try {
     const result = await pool.query(
@@ -241,12 +236,13 @@ app.get('/authors/:id/books', async (req, res) => {
 });
 
 app.post('/authors', async (req, res) => {
-  const { name } = req.body;
+
   // Validate the input data
   const validatedData = librarySchema_Authors.safeParse(req.body);
   if (!validatedData.success) {
     return res.status(400).json(z.flattenError(validatedData.error).fieldErrors);
   }
+  const { name } = validatedData.data;
   try {
     const result = await pool.query('INSERT INTO authors (name) VALUES ($1) RETURNING *', [name]);
     res.status(201).json(result.rows[0]);

@@ -20,3 +20,7 @@ The rule for **no-console** in eslint.config.ts will warn (see image below) if w
 - zod schemas moved into their own schemas.ts file
 - Removing POSTGRES_USER from the .env file reports now a readable error (see image)
 ![Task-2](/images/readable-error.png)
+
+## Exercise 3 - Validating POST and PATCH
+- New zod schema created for PATCH route
+- POST route(s) are now "zod protected"

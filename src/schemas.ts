@@ -1,8 +1,8 @@
-import {z} from 'zod'
+import { z } from 'zod';
 
 export const librarySchema_Books = z.object({
   title: z
-    .string().min(2, { message: 'Title is required' })
+    .string().min(2, { message: 'Title must be at least 2 characters long' })
     .max(50, { message: 'Title must be less than 50 characters' }),
   genre: z
     .string().min(2, { message: 'Genre is required' })
@@ -18,3 +18,12 @@ export const librarySchema_Authors = z.object({
     .string().min(2, { message: 'Author name is required' })
     .max(50, { message: 'Author name must be less than 50 characters' }),
 });
+
+//PATCH needs a partial schema
+//If PATCH reuses librarySchema_Books, a schema that requires all four fields, 
+// a PATCH with only { "genre": "Fantasy" } fails with a 400 before the COALESCE query runs.
+export const librarySchema_BooksPatch = librarySchema_Books
+  .partial()
+  .refine((data) => Object.keys(data).length > 0, {
+    message: 'At least one field must be provided',
+  });
