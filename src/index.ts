@@ -1,14 +1,10 @@
 import express from 'express';
 import { pool } from './db.js';
 import { z } from 'zod';
-//import { title } from 'process';
+import { env } from './env.js';
 
 const app = express();
 app.use(express.json());
-
-const port = process.env.APP_PORT;
-
-type DbError = Error & { code?: string };
 
 const getErrorMessage = (err: unknown): string => {
   if (err instanceof Error) {
@@ -17,8 +13,6 @@ const getErrorMessage = (err: unknown): string => {
   return 'An unknown error occurred';
 };
 
-const isDbError = (err: unknown): err is DbError =>
-  err instanceof Error && 'code' in err;
 
 app.get('/', (req, res) => {
   res.send('Welcome to the Books API!');
@@ -283,6 +277,6 @@ app.post('/authors', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+app.listen(env.APP_PORT, () => {
+  console.log(`Server is running on port ${env.APP_PORT}...`);
 });

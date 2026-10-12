@@ -11,7 +11,7 @@ export default defineConfig([
   },
   tseslint.configs.recommended,
   {
-    ignores: ['node_modules', 'dist/**'],
+    ignores: ['node_modules', 'dist'],
     rules: {
       '@typescript-eslint/no-unused-vars': 'error',
       curly: ['error', 'all'], // Enforce consistent use of curly braces
