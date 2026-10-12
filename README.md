@@ -12,4 +12,11 @@ Bash: **npm i zod**
 Note: Make sure to install the packages for types for both express and pg: Bash: **npm install -D @types/express @types/node @types/pg**\
 Otherwise you will start getting type-error messages as soon as you rename the files from .js to .ts\
 The rule for **no-console** in eslint.config.ts will warn (see image below) if we forgot to remove the console statements from our code (which should not appear in production code). In development code, however, we need console.log every so often to repair bugs.\
-![Task-6](/images/linter-console-warn.png)
+![Task-1](/images/linter-console-warn.png)
+
+## Exercise 2 - Restructuring
+- env.ts created and placed in the **src** folder
+- db.ts and index.ts both make use of the validated data
+- zod schemas moved into their own schemas.ts file
+- Removing POSTGRES_USER from the .env file reports now a readable error (see image)
+![Task-2](/images/readable-error.png)
