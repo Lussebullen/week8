@@ -27,3 +27,7 @@ export const librarySchema_BooksPatch = librarySchema_Books
   .refine((data) => Object.keys(data).length > 0, {
     message: 'At least one field must be provided',
   });
+
+//protect the id:s
+export const idParamSchema = z.coerce.number().int().positive();
+

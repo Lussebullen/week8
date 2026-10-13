@@ -24,3 +24,6 @@ The rule for **no-console** in eslint.config.ts will warn (see image below) if w
 ## Exercise 3 - Validating POST and PATCH
 - New zod schema created for PATCH route
 - POST route(s) are now "zod protected"
+
+## Exercise 4 - Validating URL params
+- Id:s can also be guarded with zod. This also is fixed now

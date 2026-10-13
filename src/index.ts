@@ -2,7 +2,7 @@ import express from 'express';
 import { pool } from './db.js';
 import { z } from 'zod';
 import { env } from './env.js';
-import { librarySchema_Authors, librarySchema_Books, librarySchema_BooksPatch } from './schemas.js';
+import { librarySchema_Authors, librarySchema_Books, librarySchema_BooksPatch, idParamSchema } from './schemas.js';
 
 const app = express();
 app.use(express.json());
@@ -21,6 +21,7 @@ app.get('/', (req, res) => {
 
 
 const allowedSorts = ['id', 'title', 'genre', 'published_year'];
+
 
 app.get('/books', async (req, res) => {
   //Filter out the books by genre if the query parameter is provided
@@ -52,12 +53,12 @@ app.get('/books', async (req, res) => {
 
 // Endpoint to get a specific book by ID
 app.get('/books/:id', async (req, res) => {
-  const { id } = req.params; // Get the book ID from the URL parameters
-  const bookId = Number(id);
-
-  if (Number.isNaN(bookId)) {
-    return res.status(400).send('Invalid book ID');
+  const parsedId = idParamSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res.status(400).send('Invalid ID');
   }
+  const id = parsedId.data;
+  const bookId = Number(id);
 
   try {
     const result = await pool.query('SELECT * FROM books WHERE id = $1', [bookId]);
@@ -99,7 +100,13 @@ app.post('/books', async (req, res) => {
 });
 
 app.put('/books/:id', async (req, res) => {
-  const { id } = req.params; // Get the book ID from the URL parameters
+  const parsedId = idParamSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res.status(400).send('Invalid ID');
+  }
+  const id = parsedId.data;
+  const bookId = Number(id);
+
   const validatedData = librarySchema_Books.safeParse(req.body);
   if (!validatedData.success) {
     return res.status(400).json(z.flattenError(validatedData.error).fieldErrors);
@@ -108,7 +115,7 @@ app.put('/books/:id', async (req, res) => {
   try {
     const result = await pool.query(
       'UPDATE books SET title = $1, genre = $2, published_year = $3, author_id = $4 WHERE id = $5 RETURNING *',
-      [title, genre, published_year, author_id, id] // Replace the placeholders with the actual values
+      [title, genre, published_year, author_id, bookId] // Replace the placeholders with the actual values
     );
     if (result.rows.length === 0) {
       return res.status(404).send('Book not found');
@@ -125,7 +132,12 @@ app.put('/books/:id', async (req, res) => {
 });
 
 app.patch('/books/:id', async (req, res) => {
-  const { id } = req.params;
+  const parsedId = idParamSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res.status(400).send('Invalid ID');
+  }
+  const id = parsedId.data;
+  const bookId = Number(id);
   
   const validatedData = librarySchema_BooksPatch.safeParse(req.body);
   if (!validatedData.success) {
@@ -142,7 +154,7 @@ app.patch('/books/:id', async (req, res) => {
            author_id = COALESCE($4, author_id)
        WHERE id = $5
        RETURNING *`,
-      [title ?? null, genre ?? null, published_year ?? null, author_id ?? null, id] //"title ?? null" turns a missing field (undefined) into null, so the placeholder always gets a value.
+      [title ?? null, genre ?? null, published_year ?? null, author_id ?? null, bookId] //"title ?? null" turns a missing field (undefined) into null, so the placeholder always gets a value.
     );
 
     if (result.rows.length === 0) {
@@ -160,11 +172,16 @@ app.patch('/books/:id', async (req, res) => {
 });
 
 app.delete('/books/:id', async (req, res) => {
-  const { id } = req.params; // Get the book ID from the URL parameters
+  const parsedId = idParamSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res.status(400).send('Invalid ID');
+  }
+  const id = parsedId.data;
+  const bookId = Number(id);
   try {
     const result = await pool.query(
       'DELETE FROM books WHERE id = $1 RETURNING *',
-      [id]
+      [bookId]
     );  
     if (result.rows.length === 0) {
       return res.status(404).send('Book not found');
@@ -195,13 +212,18 @@ app.get('/authors', async (req, res) => {
 });
 
 app.get('/authors/:id/books', async (req, res) => {
-  const { id } = req.params;
+  const parsedId = idParamSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res.status(400).send('Invalid ID');
+  }
+  const id = parsedId.data;
+  const bookId = Number(id);
 
   try {
     // Case 1: does the author exist at all?
     const author = await pool.query(
       'SELECT id, name FROM authors WHERE id = $1',
-      [id]
+      [bookId]
     );
     if (author.rows.length === 0) {
       return res.status(404).send('Author not found');
